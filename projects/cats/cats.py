@@ -103,6 +103,18 @@ def autocorrect(user_word, valid_words, diff_function, limit):
     """
     # BEGIN PROBLEM 5
     "*** YOUR CODE HERE ***"
+    if user_word in valid_words:
+        return user_word
+    
+    prev_d = len(user_word)
+    candidate = user_word
+    for word in valid_words:
+        d = diff_function(user_word, word, limit)
+        if d <= limit and d < prev_d:
+            prev_d = d
+            candidate = word
+    return candidate
+
     # END PROBLEM 5
 
 
@@ -112,32 +124,22 @@ def shifty_shifts(start, goal, limit):
     their lengths.
     """
     # BEGIN PROBLEM 6
-    assert False, 'Remove this line'
+    if not start or not goal or limit < 0:
+        return len(start) + len(goal)
+    return shifty_shifts(start[1:], goal[1:], limit - (start[0] != goal[0])) + (start[0] != goal[0])
     # END PROBLEM 6
 
 
 def meowstake_matches(start, goal, limit):
     """A diff function that computes the edit distance from START to GOAL."""
-    assert False, 'Remove this line'
 
-    if ______________: # Fill in the condition
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
+    if not start or not goal or limit < 0:
+        return len(start) + len(goal)
 
-    elif ___________: # Feel free to remove or add additional cases
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
-
-    else:
-        add_diff = ...  # Fill in these lines
-        remove_diff = ... 
-        substitute_diff = ... 
-        # BEGIN
-        "*** YOUR CODE HERE ***"
-        # END
-
+    if start[0] == goal[0]:
+        return meowstake_matches(start[1:],goal[1:],limit)
+    
+    return min(meowstake_matches(start,goal[1:],limit-1)+1, meowstake_matches(start[1:],goal,limit-1)+1, meowstake_matches(start[1:],goal[1:],limit-1)+1)
 
 def final_diff(start, goal, limit):
     """A diff function. If you implement this function, it will be used."""
