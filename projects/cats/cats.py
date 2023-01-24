@@ -106,13 +106,14 @@ def autocorrect(user_word, valid_words, diff_function, limit):
     if user_word in valid_words:
         return user_word
 
-    prev_d = len(user_word)
-    candidate = user_word
-    for word in valid_words:
-        d = diff_function(user_word, word, limit)
-        if d <= limit and d < prev_d:
-            prev_d = d
-            candidate = word
+    word_diff = [diff_function(user_word, word) for word in valid_words]
+    candidate, smallest_diff = min(
+        zip(valid_words, word_diff),
+        key = lambda a: a[1]
+    )
+
+    if smallest_diff > limit:
+        return user_word
     return candidate
 
     # END PROBLEM 5
