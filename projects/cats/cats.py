@@ -105,7 +105,7 @@ def autocorrect(user_word, valid_words, diff_function, limit):
     "*** YOUR CODE HERE ***"
     if user_word in valid_words:
         return user_word
-    
+
     prev_d = len(user_word)
     candidate = user_word
     for word in valid_words:
@@ -137,9 +137,10 @@ def meowstake_matches(start, goal, limit):
         return len(start) + len(goal)
 
     if start[0] == goal[0]:
-        return meowstake_matches(start[1:],goal[1:],limit)
-    
-    return min(meowstake_matches(start,goal[1:],limit-1)+1, meowstake_matches(start[1:],goal,limit-1)+1, meowstake_matches(start[1:],goal[1:],limit-1)+1)
+        return meowstake_matches(start[1:], goal[1:], limit)
+
+    return min(meowstake_matches(start, goal[1:], limit-1)+1, meowstake_matches(start[1:], goal, limit-1)+1, meowstake_matches(start[1:], goal[1:], limit-1)+1)
+
 
 def final_diff(start, goal, limit):
     """A diff function. If you implement this function, it will be used."""
@@ -155,6 +156,15 @@ def report_progress(typed, prompt, id, send):
     """Send a report of your id and progress so far to the multiplayer server."""
     # BEGIN PROBLEM 8
     "*** YOUR CODE HERE ***"
+    i, j = 0, 0
+    while i < len(typed) and j < len(prompt):
+        if typed[i] != prompt[j]:
+            break
+        i += 1
+        j += 1
+    ans = j/len(prompt)
+    send({'id': id, 'progress': ans})
+    return ans
     # END PROBLEM 8
 
 
@@ -181,6 +191,14 @@ def time_per_word(times_per_player, words):
     """
     # BEGIN PROBLEM 9
     "*** YOUR CODE HERE ***"
+    timestamp = []
+    for per_player in times_per_player:
+        cur = []
+        for i in range(1, len(per_player)):
+            cur.append(per_player[i] - per_player[i-1])
+        timestamp.append(cur)
+
+    return game(words, timestamp)
     # END PROBLEM 9
 
 
@@ -196,15 +214,31 @@ def fastest_words(game):
     words = range(len(all_words(game)))    # An index for each word
     # BEGIN PROBLEM 10
     "*** YOUR CODE HERE ***"
+    ans = [[] for _ in players]
+    for w in words:
+        fastest = 0
+        minutes = time(game, 0, w)
+        for p in players:
+            if minutes > time(game, p, w):
+                fastest = p
+                minutes = time(game, p, w)
+        ans[fastest].append(word_at(game, w))
+    return ans
+
+
     # END PROBLEM 10
 
 
 def game(words, times):
     """A data abstraction containing all words typed and their times."""
-    assert all([type(w) == str for w in words]), 'words should be a list of strings'
-    assert all([type(t) == list for t in times]), 'times should be a list of lists'
-    assert all([isinstance(i, (int, float)) for t in times for i in t]), 'times lists should contain numbers'
-    assert all([len(t) == len(words) for t in times]), 'There should be one word per time.'
+    assert all([type(w) == str for w in words]
+               ), 'words should be a list of strings'
+    assert all([type(t) == list for t in times]
+               ), 'times should be a list of lists'
+    assert all([isinstance(i, (int, float))
+               for t in times for i in t]), 'times lists should contain numbers'
+    assert all([len(t) == len(words) for t in times]
+               ), 'There should be one word per time.'
     return [words, times]
 
 
@@ -235,6 +269,7 @@ def game_string(game):
     """A helper function that takes in a game object and returns a string representation of it"""
     return "game(%s, %s)" % (game[0], game[1])
 
+
 enable_multiplayer = False  # Change to True when you
 
 ##########################
@@ -242,26 +277,31 @@ enable_multiplayer = False  # Change to True when you
 ##########################
 
 key_distance = get_key_distances()
+
+
 def key_distance_diff(start, goal, limit):
     """ A diff function that takes into account the distances between keys when
     computing the difference score."""
 
-    start = start.lower() #converts the string to lowercase
-    goal = goal.lower() #converts the string to lowercase
+    start = start.lower()  # converts the string to lowercase
+    goal = goal.lower()  # converts the string to lowercase
 
     # BEGIN PROBLEM EC1
     "*** YOUR CODE HERE ***"
     # END PROBLEM EC1
 
+
 def memo(f):
     """A memoization function as seen in John Denero's lecture on Growth"""
 
     cache = {}
+
     def memoized(*args):
         if args not in cache:
             cache[args] = f(*args)
         return cache[args]
     return memoized
+
 
 key_distance_diff = count(key_distance_diff)
 
@@ -282,7 +322,7 @@ def faster_autocorrect(user_word, valid_words, diff_function, limit):
 def run_typing_test(topics):
     """Measure typing speed and accuracy on the command line."""
     paragraphs = lines_from_file('data/sample_paragraphs.txt')
-    select = lambda p: True
+    def select(p): return True
     if topics:
         select = about(topics)
     i = 0
