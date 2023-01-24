@@ -288,6 +288,20 @@ def key_distance_diff(start, goal, limit):
 
     # BEGIN PROBLEM EC1
     "*** YOUR CODE HERE ***"
+    if limit < 0:
+        return float('inf')
+
+    if not start or not goal:
+        return len(start) + len(goal)
+
+    if start[0] == goal[0]:
+        return key_distance_diff(start[1:], goal[1:], limit)
+
+    return min(
+        key_distance_diff(start, goal[1:], limit-1)+1, 
+        key_distance_diff(start[1:], goal, limit-1)+1, 
+        key_distance_diff(start[1:], goal[1:], limit-1)+key_distance[(start[0],goal[0])]
+    )
     # END PROBLEM EC1
 
 
@@ -303,14 +317,29 @@ def memo(f):
     return memoized
 
 
+key_distance_diff = memo(key_distance_diff)
 key_distance_diff = count(key_distance_diff)
 
-
+cache = {}
 def faster_autocorrect(user_word, valid_words, diff_function, limit):
     """A memoized version of the autocorrect function implemented above."""
 
     # BEGIN PROBLEM EC2
     "*** YOUR CODE HERE ***"
+    idx = tuple([user_word, tuple(valid_words), diff_function, limit])
+    if user_word in valid_words:
+        return user_word
+    if idx in cache:
+        return cache[idx]
+    else:
+        words_diff = [diff_function(user_word, w, limit) for w in valid_words]
+        candidate, smallest_diff = min(
+            zip(valid_words, words_diff), key=lambda item: item[1])
+       
+        if smallest_diff > limit:
+            candidate = user_word
+        cache[idx] = candidate
+        return candidate
     # END PROBLEM EC2
 
 
