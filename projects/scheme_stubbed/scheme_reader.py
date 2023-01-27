@@ -25,6 +25,7 @@ from buffer import Buffer, InputReader, LineReader
 
 # Pairs and Scheme lists
 
+
 class Pair(object):
     """A pair has two instance attributes: first and rest. rest must be a Pair or nil
 
@@ -36,10 +37,12 @@ class Pair(object):
     >>> print(s.map(lambda x: x+4))
     (5 6)
     """
+
     def __init__(self, first, rest):
         from scheme_builtins import scheme_valid_cdrp, SchemeError
         if not scheme_valid_cdrp(rest):
-            raise SchemeError("cdr can only be a pair, nil, or a promise but was {}".format(rest))
+            raise SchemeError(
+                "cdr can only be a pair, nil, or a promise but was {}".format(rest))
         self.first = first
         self.rest = rest
 
@@ -78,6 +81,7 @@ class Pair(object):
         else:
             raise TypeError('ill-formed list (cdr is a promise)')
 
+
 class nil(object):
     """The empty list"""
 
@@ -93,7 +97,8 @@ class nil(object):
     def map(self, fn):
         return self
 
-nil = nil() # Assignment hides the nil class; there is only one instance
+
+nil = nil()  # Assignment hides the nil class; there is only one instance
 
 # Scheme list parser
 
@@ -101,6 +106,7 @@ nil = nil() # Assignment hides the nil class; there is only one instance
 quotes = {"'":  'quote',
           '`':  'quasiquote',
           ',':  'unquote'}
+
 
 def scheme_read(src):
     """Read the next expression from SRC, a Buffer of tokens.
@@ -121,14 +127,15 @@ def scheme_read(src):
     if cur == '(':
         return read_tail(src)
     if cur in quotes:
-        cur =  src.pop_first()
-        return Pair(quotes[cur],Pair(scheme_read(src), nil)) 
+        cur = src.pop_first()
+        return Pair(quotes[cur], Pair(scheme_read(src), nil))
     if cur == 'nil':
         return nil
     if cur not in DELIMITERS:
         return cur
     raise SyntaxError('Unexpected token {0}'.format(cur))
     # END PROBLEM 1/2
+
 
 def read_tail(src):
     """Return the remainder of a list in SRC, starting before an element or ).
@@ -153,9 +160,11 @@ def read_tail(src):
 
 # Convenience methods
 
+
 def buffer_input(prompt='scm> '):
     """Return a Buffer instance containing interactive input."""
     return Buffer(tokenize_lines(InputReader(prompt)))
+
 
 def buffer_lines(lines, prompt='scm> ', show_prompt=False):
     """Return a Buffer instance iterating through LINES."""
@@ -165,9 +174,11 @@ def buffer_lines(lines, prompt='scm> ', show_prompt=False):
         input_lines = LineReader(lines, prompt)
     return Buffer(tokenize_lines(input_lines))
 
+
 def read_line(line):
     """Read a single string LINE as a Scheme expression."""
     return scheme_read(Buffer(tokenize_lines([line])))
+
 
 def repl_str(val):
     """Should largely match str(val), except for booleans and undefined."""
@@ -182,6 +193,8 @@ def repl_str(val):
     return str(val)
 
 # Interactive loop
+
+
 def read_print_loop():
     """Run a read-print loop for Scheme expressions."""
     while True:
@@ -196,6 +209,7 @@ def read_print_loop():
         except (KeyboardInterrupt, EOFError):  # <Control>-D, etc.
             print()
             return
+
 
 @main
 def main(*args):
