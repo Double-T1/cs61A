@@ -117,7 +117,17 @@ def scheme_read(src):
     if src.current() is None:
         raise EOFError
     # BEGIN PROBLEM 1/2
-    "*** YOUR CODE HERE ***"
+    cur = src.pop_first()
+    if cur == '(':
+        return read_tail(src)
+    if cur in quotes:
+        cur =  src.pop_first()
+        return Pair(quotes[cur],Pair(scheme_read(src), nil)) 
+    if cur == 'nil':
+        return nil
+    if cur not in DELIMITERS:
+        return cur
+    raise SyntaxError('Unexpected token {0}'.format(cur))
     # END PROBLEM 1/2
 
 def read_tail(src):
@@ -133,6 +143,10 @@ def read_tail(src):
             raise SyntaxError('unexpected end of file')
         # BEGIN PROBLEM 1
         "*** YOUR CODE HERE ***"
+        if src.current() == ')':
+            src.pop_first()
+            return nil
+        return Pair(scheme_read(src), read_tail(src))
         # END PROBLEM 1
     except EOFError:
         raise SyntaxError('unexpected end of file')
