@@ -33,9 +33,12 @@ def scheme_eval(expr, env, _=None): # Optional third argument is ignored
     first, rest = expr.first, expr.rest
     if scheme_symbolp(first) and first in SPECIAL_FORMS:
         return SPECIAL_FORMS[first](rest, env)
-    else:
+    else: #call expression
         # BEGIN PROBLEM 4
-        "*** YOUR CODE HERE ***"
+        operator = scheme_eval(first, env)
+        validate_procedure(operator)
+        operands = rest.map(lambda x: scheme_eval(x,env))
+        return scheme_apply(operator, operands, env)
         # END PROBLEM 4
 
 def self_evaluating(expr):
@@ -92,13 +95,16 @@ class Frame(object):
     def define(self, symbol, value):
         """Define Scheme SYMBOL to have VALUE."""
         # BEGIN PROBLEM 2
-        "*** YOUR CODE HERE ***"
+        self.bindings[symbol] = value
         # END PROBLEM 2
 
     def lookup(self, symbol):
         """Return the value bound to SYMBOL. Errors if SYMBOL is not found."""
         # BEGIN PROBLEM 2
-        "*** YOUR CODE HERE ***"
+        if symbol in self.bindings:
+            return self.bindings[symbol]
+        if self.parent:
+            return self.parent.lookup(symbol)
         # END PROBLEM 2
         raise SchemeError('unknown identifier: {0}'.format(symbol))
 
@@ -133,8 +139,8 @@ class BuiltinProcedure(Procedure):
 
     def __init__(self, fn, use_env=False, name='builtin'):
         self.name = name
-        self.fn = fn
-        self.use_env = use_env
+        self.fn = fn   #the Python function that implements the built-in procedure
+        self.use_env = use_env   #whether the enviornment 
 
     def __str__(self):
         return '#[{0}]'.format(self.name)
@@ -153,7 +159,15 @@ class BuiltinProcedure(Procedure):
         # Convert a Scheme list to a Python list
         python_args = []
         # BEGIN PROBLEM 3
-        "*** YOUR CODE HERE ***"
+        while args:
+            python_args.append(args.first)
+            args = args.rest
+        if self.use_env:
+            python_args.append(env)
+        try:
+            return self.fn(*python_args)
+        except (TypeError) as e:
+            raise SchemeError('Error message: ', e)
         # END PROBLEM 3
 
 class LambdaProcedure(Procedure):
@@ -233,7 +247,8 @@ def do_define_form(expressions, env):
     if scheme_symbolp(target):
         validate_form(expressions, 2, 2) # Checks that expressions is a list of length exactly 2
         # BEGIN PROBLEM 5
-        "*** YOUR CODE HERE ***"
+        env.define(expressions.first, scheme_eval(expressions.rest.first, env))
+        return expressions.first
         # END PROBLEM 5
     elif isinstance(target, Pair) and scheme_symbolp(target.first):
         # BEGIN PROBLEM 9
@@ -252,7 +267,7 @@ def do_quote_form(expressions, env):
     """
     validate_form(expressions, 1, 1)
     # BEGIN PROBLEM 6
-    "*** YOUR CODE HERE ***"
+    return expressions.first
     # END PROBLEM 6
 
 def do_begin_form(expressions, env):
