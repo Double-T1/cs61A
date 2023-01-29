@@ -33,10 +33,12 @@ def scheme_eval(expr, env, _=None): # Optional third argument is ignored
     first, rest = expr.first, expr.rest
     if scheme_symbolp(first) and first in SPECIAL_FORMS:
         return SPECIAL_FORMS[first](rest, env)
-    else: #call expression
+    else: #call expression and handle define-macro
         # BEGIN PROBLEM 4
         operator = scheme_eval(first, env)
         validate_procedure(operator)
+        if isinstance(operator, MacroProcedure):
+            return scheme_eval(operator.apply_macro(rest,env),env)
         operands = rest.map(lambda x: scheme_eval(x,env))
         return scheme_apply(operator, operands, env)
         # END PROBLEM 4
@@ -71,11 +73,11 @@ def eval_all(expressions, env):
     2
     """
     # BEGIN PROBLEM 7
-    result = None
-    while expressions:
-        result = scheme_eval(expressions.first, env)
+    # to check for tail context, 
+    while expressions is not nil and expressions.rest is not nil:
+        scheme_eval(expressions.first, env)
         expressions = expressions.rest
-    return result # change this line
+    return scheme_eval(expressions.first, env, True) if expressions else None # change this line
     # END PROBLEM 7
 
 ################
@@ -326,9 +328,9 @@ def do_if_form(expressions, env):
     """
     validate_form(expressions, 2, 3)
     if is_true_primitive(scheme_eval(expressions.first, env)):
-        return scheme_eval(expressions.rest.first, env)
+        return scheme_eval(expressions.rest.first, env, True)
     elif len(expressions) == 3:
-        return scheme_eval(expressions.rest.rest.first, env)
+        return scheme_eval(expressions.rest.rest.first, env, True)
 
 def do_and_form(expressions, env):
     """Evaluate a (short-circuited) and form.
@@ -344,13 +346,12 @@ def do_and_form(expressions, env):
     False
     """
     # BEGIN PROBLEM 12
-    ans = True
-    while expressions is not nil:
-        ans = scheme_eval(expressions.first, env)
-        if is_false_primitive(ans):
+    while expressions is not nil and expressions.rest is not nil:
+        if is_false_primitive(scheme_eval(expressions.first, env)):
             return False
         expressions = expressions.rest
-    return ans
+    last = scheme_eval(expressions.first, env, True) if expressions is not nil else False
+    return last if is_true_primitive(last) else True
     # END PROBLEM 12
 
 def do_or_form(expressions, env):
@@ -367,13 +368,13 @@ def do_or_form(expressions, env):
     6
     """
     # BEGIN PROBLEM 12
-    ans = False
-    while expressions is not nil:
+    while expressions is not nil and expressions.rest is not nil:
         ans = scheme_eval(expressions.first, env)
         if is_true_primitive(ans):
             return ans
         expressions = expressions.rest
-    return False
+    last = scheme_eval(expressions.first, env, True) if expressions is not nil else False
+    return last if is_true_primitive(last) else False
     # END PROBLEM 12
 
 def do_cond_form(expressions, env):
@@ -426,7 +427,6 @@ def make_let_frame(bindings, env):
     validate_formals(names)
     return env.make_child_frame(names, values)
 
-
 def do_define_macro(expressions, env):
     """Evaluate a define-macro form.
 
@@ -437,9 +437,18 @@ def do_define_macro(expressions, env):
     1
     """
     # BEGIN Problem 20
-    "*** YOUR CODE HERE ***"
+    validate_form(expressions, 2)
+    target = expressions.first
+    if isinstance(target, Pair) and scheme_symbolp(target.first):
+        name = target.first
+        formals = target.rest
+        validate_formals(formals)
+        env.define(name, MacroProcedure(formals, expressions.rest, env))
+        return name
+    else:
+        raise SchemeError('non_symbol: {0}'.format(target))
     # END Problem 20
-
+ 
 
 def do_quasiquote_form(expressions, env):
     """Evaluate a quasiquote form with parameters EXPRESSIONS in
@@ -637,9 +646,12 @@ def optimize_tail_calls(prior_eval_function):
             return Thunk(expr, env)
 
         result = Thunk(expr, env)
+        # repeatedly call prior_eval_function until the result is a value, rather than a Thunk
         # BEGIN
-        "*** YOUR CODE HERE ***"
+        while isinstance(result, Thunk):
+            result = prior_eval_function(result.expr, result.env)
         # END
+        return result
     return optimized_eval
 
 
@@ -650,7 +662,7 @@ def optimize_tail_calls(prior_eval_function):
 ################################################################
 # Uncomment the following line to apply tail call optimization #
 ################################################################
-# scheme_eval = optimize_tail_calls(scheme_eval)
+scheme_eval = optimize_tail_calls(scheme_eval)
 
 
 
