@@ -34,7 +34,7 @@ class Pair(object):
     Pair(1, Pair(2, nil))
     >>> print(s)
     (1 2)
-    >>> print(s.map(lambda x: x+4))
+    >>> print(s.map(x: x+4))
     (5 6)
     """
     def __init__(self, first, rest):
